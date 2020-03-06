@@ -7,6 +7,7 @@
 #include "HexFiend/HexFiend.h"
 #include "GBMemoryByteArray.h"
 #include "GBWarningPopover.h"
+#include "GBMemoryWindow.h"
 
 /* Todo: The general Objective-C coding style conflicts with SameBoy's. This file needs a cleanup. */
 /* Todo: Split into category files! This is so messy!!! */
@@ -29,6 +30,7 @@ enum model {
     bool fullScreen;
     bool in_sync_input;
     HFController *hex_controller;
+    GBMemoryWindow *memory_window;
 
     NSString *lastConsoleInput;
     HFLineCountingRepresenter *lineRep;
@@ -492,6 +494,29 @@ static void audioCallback(GB_gameboy_t *gb, GB_sample_t *sample)
 
 - (void) initMemoryView
 {
+    
+    // memory_window = [[GBMemoryWindow alloc] init];
+ 
+    // NSLog(@"INIT MEMORY VIEW! %@", memory_window);
+    // // [memory_window display];
+    // [memory_window makeKeyAndOrderFront:NSApp];
+
+    NSArray *objects;
+// if (!_preferencesWindow) {
+    [[NSBundle mainBundle] loadNibNamed:@"GBMemoryWindow" owner:self topLevelObjects:&objects];
+    GBMemoryWindow *memory_watch_window = [objects firstObject];
+    [memory_watch_window setGameBoy:&gb];
+    [memory_watch_window startWatching:0xD361 length: 4];
+    // DFE7
+    NSLog(@"INIT MEMORY VIEW! %@", memory_watch_window);
+    // uint16_t addr;
+        // GB_log();
+        // GB_log(&gb, "EVALUATING2");
+    // NSLog(@"INIT MEMORY VIEW!: %@", [sender stringValue]);
+    // GB_debugger_evaluate(&gb, [@"[$0]" UTF8String], &addr, NULL);
+    // NSLog(@"INIT MEMORY VIEW!: %d", (int)addr);
+
+
     hex_controller = [[HFController alloc] init];
     [hex_controller setBytesPerColumn:1];
     [hex_controller setFont:[NSFont userFixedPitchFontOfSize:12]];
@@ -1050,9 +1075,15 @@ static void audioCallback(GB_gameboy_t *gb, GB_sample_t *sample)
 {
     NSString *error = [self captureOutputForBlock:^{
         uint16_t addr;
+        // GB_log();
+        // GB_log(&gb, "EVALUATING2");
+        // NSLog(@"EVALUATING: %@", [sender stringValue]);
+        // GB_debugger_evaluate(&gb, [@"[$0]" UTF8String], &addr, NULL)
+        // NSLog(@"TEST: %d", int(addr));
+
         if (GB_debugger_evaluate(&gb, [[sender stringValue] UTF8String], &addr, NULL)) {
             return;
-        }
+        }   
         addr -= lineRep.valueOffset;
         if (addr >= hex_controller.byteArray.length) {
             GB_log(&gb, "Value $%04x is out of range.\n", addr);
